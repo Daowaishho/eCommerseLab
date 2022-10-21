@@ -4,15 +4,20 @@ import hanlp
 import time
 import datetime
 time_start = time.time()  # 记录开始时间
-# function()   执行的程序
 config = {
-    'exclude_words': ("什么", "怎么", '图片', '视频', '教学', '一般'),
+    # 种子关键字
+    'seed_keywords': ("微信",),
+    # 中介关键字个数
+    'limit': 10,
+    # 读取的记录条目数
+    'line_number_limit': 100000,
+    # 排除的无效词汇
+    'exclude_words': ("什么", "怎么", '图片', '视频', '教学', '一般', '多少', '多久', '可以', '为什么', '转发', '下载', '国语版', '哪个', '一定'),
+    # 排除的无效字符
     'exclude_symbol': ("…", "", '\n', '\t', ''),
     'model': True,
-    'line_number_limit': 30000,
     'input_path': "/Users/huangshujie/PycharmProjects/pythonProject/raw_dataset/user_tag_query.10W.TRAIN",
     'output_path': "/Users/huangshujie/PycharmProjects/pythonProject/raw_dataset_after_cleaning/output_test",
-    'seed_keywords': ("微信",),
     'seed_relative_length': 0,
     'intermediary_words': [],
     'dataset_file': "/Users/huangshujie/PycharmProjects/pythonProject/raw_dataset_after_cleaning/output_test",
@@ -24,7 +29,6 @@ config = {
     'competitive_words_file': '/Users/huangshujie/PycharmProjects/pythonProject/competitive_keywords/competitive_keywords',
     'competitive_level_file': '/Users/huangshujie/PycharmProjects/pythonProject/competitive_level_file/competitive_level_file',
     'result': '/Users/huangshujie/PycharmProjects/pythonProject/result/result',
-    'limit': 10,
     'get_all': False
 }
 weight_result = dict()
@@ -66,7 +70,7 @@ def check_all_letters_or_numbers(word):
     :param word:输入的单词
     :return: boolean类型，是否为长串的数字或者字母，以及网站
     """
-    reg = r"[a-zA-Z0-9/:.．ａ-ｚＡ-Ｚ０-９]"
+    reg = r"[a-zA-Z0-9/\:.．ａ-ｚＡ-Ｚ０-９]"
     pattern = re.compile(reg)
     return re.match(pattern, str(word)) is not None
 
