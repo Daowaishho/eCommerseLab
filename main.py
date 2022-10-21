@@ -2,12 +2,14 @@ import codecs
 import re
 import hanlp
 import time
+import datetime
 time_start = time.time()  # 记录开始时间
 # function()   执行的程序
-
 config = {
+    'exclude_words': ("什么", "怎么", '图片', '视频', '教学', '一般'),
+    'exclude_symbol': ("…", "", '\n', '\t', ''),
     'model': True,
-    'line_number_limit': 100000,
+    'line_number_limit': 30000,
     'input_path': "/Users/huangshujie/PycharmProjects/pythonProject/raw_dataset/user_tag_query.10W.TRAIN",
     'output_path': "/Users/huangshujie/PycharmProjects/pythonProject/raw_dataset_after_cleaning/output_test",
     'seed_keywords': ("微信",),
@@ -21,6 +23,7 @@ config = {
     'competitive_word_frequency_file': '/Users/huangshujie/PycharmProjects/pythonProject/competitive_word_frequency_file/competitive_word_frequency_file',
     'competitive_words_file': '/Users/huangshujie/PycharmProjects/pythonProject/competitive_keywords/competitive_keywords',
     'competitive_level_file': '/Users/huangshujie/PycharmProjects/pythonProject/competitive_level_file/competitive_level_file',
+    'result': '/Users/huangshujie/PycharmProjects/pythonProject/result/result',
     'limit': 10,
     'get_all': False
 }
@@ -37,12 +40,15 @@ if config['model']:
         .append(hanlp.load('CTB9_CON_ELECTRA_SMALL'), output_key='con', input_key='tok')
 
 
+result_file = open(config['result'], "a+")
+
+
 def check_invalid_symbol(word):
     """
     :param word:输入的单词
     :return: boolean类型，是否属于制定的无效符号
     """
-    symbol_set = ("…", "", '\n', '\t', '')
+    symbol_set = config['exclude_symbol']
     return word in symbol_set
 
 
@@ -51,7 +57,7 @@ def meangingless_intermediary_keywords(word):
     :param word:输入的单词
     :return: boolean类型，是否属于制定的无效的中介关键词
     """
-    symbol_set = ("什么", "怎么", '图片', '视频', '教学')
+    symbol_set = config['exclude_words']
     return word in symbol_set
 
 
@@ -324,6 +330,7 @@ def print_competition(competitive_words_file):
     temp_dict = sorted(temp_dict.items(), key=lambda x: x[1], reverse=True)
     for key, value in temp_dict:
         print(key+"的竞争度为"+value)
+        result_file.write(key+"的竞争度为"+value+'\n')
     input_file.close()
 
 
@@ -350,3 +357,9 @@ if __name__ == "__main__":
     time_end = time.time()  # 记录结束时间
     time_sum = time_end - time_start  # 计算的时间差为程序的执行时间，单位为秒/s
     print("种子关键字"+config['seed_keywords'][0]+"记录条目数目"+str(config['line_number_limit'])+"\n用时："+str(time_sum)+"s")
+    result_file.write("种子关键字:"+config['seed_keywords'][0]+"\n记录条目数目:"+str(config['line_number_limit'])+"\n用时："+str(time_sum) + "s\n")
+    result_file.write("中介关键字个数:" + str(config['limit']) + '\n')
+    current_time = datetime.datetime.now()
+    result_file.write("time:    " + str(current_time)+'\n')
+    result_file.write('-' * 100 + '\n')
+    result_file.close()
