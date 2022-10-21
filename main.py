@@ -1,12 +1,16 @@
 import codecs
 import re
 import hanlp
+import time
+time_start = time.time()  # 记录开始时间
+# function()   执行的程序
 
 config = {
-    'model': False,
+    'model': True,
+    'line_number_limit': 100000,
     'input_path': "/Users/huangshujie/PycharmProjects/pythonProject/raw_dataset/user_tag_query.10W.TRAIN",
     'output_path': "/Users/huangshujie/PycharmProjects/pythonProject/raw_dataset_after_cleaning/output_test",
-    'seed_keywords': ("篮球",),
+    'seed_keywords': ("微信",),
     'seed_relative_length': 0,
     'intermediary_words': [],
     'dataset_file': "/Users/huangshujie/PycharmProjects/pythonProject/raw_dataset_after_cleaning/output_test",
@@ -138,8 +142,10 @@ def extraction_gbk_to_utf8(input_path, output_path):
 def get_relative_words(seed_keywords, dataset_file, relative_words_file):
     input_file = codecs.open(dataset_file, 'r', 'utf8', errors='ignore')
     output_file = open(relative_words_file, "w+")
-    while True:
+    line_count = 0
+    while line_count < config['line_number_limit']:
         line = input_file.readline().split('\n')[0]
+        line_count += 1
         if line != '':
             for words in seed_keywords:
                 if words in line:
@@ -207,8 +213,10 @@ def calculate_weight(dataset_file):
     global weight_result
     seed_relative_num = 0
     input_file = codecs.open(dataset_file, 'r', 'utf8', errors='ignore')
-    while True:
+    line_count = 0
+    while line_count < config['line_number_limit']:
         line = input_file.readline().split('\n')[0]
+        line_count += 1
         if line != '':
             if config['seed_keywords'][0] in line:
                 seed_relative_num += 1
@@ -235,14 +243,12 @@ def get_competitive_keywords(dataset_file, competitive_words_file):
     global competitive_keywords_dict
     input_file = codecs.open(dataset_file, 'r', 'utf8', errors='ignore')
     output_file = open(competitive_words_file, "w+")
-    global stop
-    while True:
+    line_count = 0
+    while line_count < config['line_number_limit']:
         line = input_file.readline().split('\n')[0]
+        line_count += 1
         if line != '':
             # have seed , doesn`t have key
-            stop += 1
-            if stop > 10000:
-                break
             if config['seed_keywords'][0] not in line:
                 for keywords in weight_result:
                     if keywords in line:
@@ -250,7 +256,7 @@ def get_competitive_keywords(dataset_file, competitive_words_file):
                             competitive_keywords_dict[keywords] = {}
                         for seperated_words in HanLP(line)["tok"][0]:
                             if seperated_words != keywords and competitive_keywords_cleaning(seperated_words) is True:
-                                print("count:"+str(stop)+"\nseprate:"+str(seperated_words)+"\nkeywords:"+str(keywords)+"\nline:"+str(line))
+                                print("separate:"+str(seperated_words)+"\nkeywords:"+str(keywords)+"\nline:"+str(line))
                                 if seperated_words not in competitive_keywords_dict[keywords]:  # 第一次出现的字符会被赋值1
                                     competitive_keywords_dict[keywords][seperated_words] = 1
                                 if seperated_words in competitive_keywords_dict[keywords]:  # 再次出现的字符value加1
@@ -282,8 +288,10 @@ def get_competitive_level(data_set, competitive_keywords_file, competitive_level
             a = 0
             sa = 0
             data_set_file = codecs.open(data_set, 'r', 'utf8', errors='ignore')
-            while True:
+            line_count = 0
+            while line_count < config['line_number_limit']:
                 record = data_set_file.readline()
+                line_count += 1
                 if record != '':
                     print_count()
                     if k_word in record and a_word in record:
@@ -308,8 +316,8 @@ def print_competition(competitive_words_file):
     temp_dict = {}
     while True:
         line = input_file.readline()
-        if line != '':
-            words = line.split('的竞争度为')
+        if line != '' and line != '\n':
+            words = line.split(':')
             temp_dict[words[0]] = words[1].replace('\n', '')
         else:
             break
@@ -329,13 +337,16 @@ if __name__ == "__main__":
     # 数据清洗
     # extraction_gbk_to_utf8(config['input_path'], config['output_path'])
     # 给出种子关键字找出关联词并分词
-    # get_relative_words(config['seed_keywords'], config['dataset_file'], config['relative_words_file'])
+    get_relative_words(config['seed_keywords'], config['dataset_file'], config['relative_words_file'])
     # 求出词频并选出limit个数的关键词
-    # get_word_frequency(config['relative_words_file'], config['word_frequency_file'], config['limit'], config['get_all'])
+    get_word_frequency(config['relative_words_file'], config['word_frequency_file'], config['limit'], config['get_all'])
     # 把求出的关键词读入其中
-    # get_intermediary_words_from_file(config['intermediary_keywords'])
+    get_intermediary_words_from_file(config['intermediary_keywords'])
     # 计算权重
-    # calculate_weight(config['dataset_file'])
-    # get_competitive_keywords(config['dataset_file'], config['competitive_words_file'])
-    # get_competitive_level(config['dataset_file'], config['competitive_words_file'], config['competitive_level_file'])
+    calculate_weight(config['dataset_file'])
+    get_competitive_keywords(config['dataset_file'], config['competitive_words_file'])
+    get_competitive_level(config['dataset_file'], config['competitive_words_file'], config['competitive_level_file'])
     print_competition(config['competitive_level_file'])
+    time_end = time.time()  # 记录结束时间
+    time_sum = time_end - time_start  # 计算的时间差为程序的执行时间，单位为秒/s
+    print("种子关键字"+config['seed_keywords'][0]+"记录条目数目"+str(config['line_number_limit'])+"\n用时："+str(time_sum)+"s")
